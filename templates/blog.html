@@ -5,7 +5,7 @@
     {% if name|length == 0 %}
     <p>No new blogs</p>
     {% else %}
-        <ul>
+        <ul style="list-style-type:none">
             {% for name in name %}
             <li>{{name.title, content.body}}</li>
              <hr/>

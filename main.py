@@ -25,6 +25,7 @@ def index():
 
 @app.route ('/blog', methods=['POST', "GET"])
 def blog():
+
     if request.method == 'POST':
         blog_name = request.form['name']
         blog_content = request.form['content']
@@ -36,15 +37,15 @@ def blog():
     content = Blog.query.all()
     return render_template('blog.html',title="Build-a-blog", name=name, content=content)
 
-     #TODO - figure out why blog content not coming in correctly
-     #TODO - get blog post underneath bloth name
+     #TODO - determine how to check for the same blog post
+     #TODO - get blog post underneath blog name
 
 
 @app.route('/newblog', methods=['POST', "GET"]) 
 def newblog():
    #TODO - create error messages if fields in form are left blank
-    
-    return render_template('/newpost.html')   
+   
+    return render_template('/newpost.html')
  
 if __name__ == '__main__':
     app.run()
