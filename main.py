@@ -18,6 +18,7 @@ class Blog(db.Model):
         self.title = title
         self.body = body
 
+
 @app.route ('/')
 def index():
     return redirect ("/blogs")
@@ -25,10 +26,9 @@ def index():
 @app.route ('/blogs', methods=['POST', "GET"])
 def blog():
     post_id = request.args.get('id')
-    post_id_int = int(post_id)
-    
+
     if post_id:
-        name = Blog.query.get(post_id_int)
+        name = Blog.query.get(post_id)
         return render_template('bloglist.html',title="Blogs Page",content="",name=name)
     else:
         blogs = Blog.query.all()
@@ -49,6 +49,7 @@ def newblog():
             db.session.add(new_blog)
             db.session.commit()
             session ['blog_name'] = blog_name
+
             return redirect ('/')
         else:
             flash ('Field cannot be left blank', 'error')
