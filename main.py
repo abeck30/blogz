@@ -11,41 +11,51 @@ app.secret_key = "1234abcd"
 class Blog(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(125))
+    title = db.Column(db.String(125), unique=True)
     body = db.Column(db.String(500))
 
     def __init__(self, title, body):
         self.title = title
         self.body = body
 
-
 @app.route ('/')
 def index():
-    return redirect ("/blog")
+    return redirect ("/blogs")
 
-@app.route ('/blog', methods=['POST', "GET"])
+@app.route ('/blogs', methods=['POST', "GET"])
 def blog():
-
-    if request.method == 'POST':
-        blog_name = request.form['name']
-        blog_content = request.form['content']
-        new_blog = Blog(blog_name,blog_content)
-        db.session.add(new_blog)
-        db.session.commit()
-        
-    name = Blog.query.all()
-    content = Blog.query.all()
-    return render_template('blog.html',title="Build-a-blog", name=name, content=content)
-
-     #TODO - determine how to check for the same blog post
-     #TODO - get blog post underneath blog name
+    post_id = request.args.get('id')
+    post_id_int = int(post_id)
+    
+    if post_id:
+        name = Blog.query.get(post_id_int)
+        return render_template('bloglist.html',title="Blogs Page",content="",name=name)
+    else:
+        blogs = Blog.query.all()
+        return render_template('bloglist.html',title="Blogs Page",content=blogs,name="")
 
 
 @app.route('/newblog', methods=['POST', "GET"]) 
 def newblog():
-   #TODO - create error messages if fields in form are left blank
+
+    if request.method == 'POST':
+        blog_name = request.form['name']
+        blog_content = request.form['content'] 
+        
+        existing_blog = Blog.query.filter_by(title=blog_name).first()
+        
+        if not existing_blog:
+            new_blog = Blog(blog_name,blog_content)
+            db.session.add(new_blog)
+            db.session.commit()
+            session ['blog_name'] = blog_name
+            return redirect ('/')
+        else:
+            flash ('Field cannot be left blank', 'error')
+    
+    return render_template('newblog.html')
+
    
-    return render_template('/newpost.html')
  
 if __name__ == '__main__':
     app.run()

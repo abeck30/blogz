@@ -1,13 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-
-<h1>Add a New Blog</h1>
-<form method='post' action="/blog">
+<h1>Build-a-Blog</h1>
+<form method='post' >
     <label>
         Blog Name:
         <br/>
-        <input type='text' name='name' />
+        <input type='text' name='name'  />
     </label>
     <br/>
     <br/>
@@ -15,7 +14,6 @@
         <br/>
         <textarea name='content' rows="15" cols="50"></textarea>
     </label>
-    
     <br/>
     <br/>
     <input type='submit' value='Add New Blog' />
