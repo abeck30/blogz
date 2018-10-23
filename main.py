@@ -30,6 +30,7 @@ def blog():
 
    if post_id:
        #post_id_int = int(post_id)
+       #TODO check if name is not blank display the one posting or (Else) display everything 9o8
        name = Blog.query.get(post_id)
        return render_template('bloglist.html',title="Blogs Page",content="",name=name)
 
