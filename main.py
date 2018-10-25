@@ -22,18 +22,18 @@ class Blog(db.Model):
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(25)) 
+    username = db.Column(db.String(25), unique=True) 
     password = db.Column(db.String(25))
     blogs = db.relationship('Blog', backref='owner')
 
-    def __init__(self,username,password,blogs):
+    def __init__(self,username,password):
         self.username = username
         self.password = password
-        self.blogs = blogs
+
 
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'register']
+    allowed_routes = ['login', 'signup']
     if request.endpoint not in allowed_routes and 'username' not in session:
         return redirect('/login') 
 
@@ -43,34 +43,54 @@ def login():
         username = request.form['username']
         password = request.form['password']
         user = User.query.filter_by(username=username).first()
+        
         if user and user.password == password:
             session['username'] = username
             flash("Logged in")
-            return redirect('/')
+            return redirect('/newblog')
         else:
-            flash('Password is incorrect, or user does not exist', 'error')
+            flash('Password is incorrect or username not registered', 'error')
             
     return render_template('login.html')
 
 
 @app.route('/signup', methods=['POST', 'GET'])
-def register():
+def signup():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
         verify = request.form['verify']
-
-        # TODO - validate user's data
+        error = False
 
         existing_user = User.query.filter_by(username=username).first()
-        if not existing_user:
+
+
+        if len(username) == 0 or len(password) == 0 or len(verify) == 0:
+            flash('Fields cannot be blank', 'error')
+            error = True
+
+        elif len(username) <= 3:
+            flash('Username must be more than 3 characters','error')
+            error = True
+
+        elif len(password) <= 3:
+            flash('Password must be longer than 3 characters', 'error')
+            error = True
+        
+        elif verify != password:
+            flash('Passwords do not match. Try again', 'error')
+            error = True
+
+        if not existing_user and error == False:
             new_user = User(username, password)
             db.session.add(new_user)
             db.session.commit()
             session['username'] = username
             return redirect('/newblog')
         else:
-            flash('Fields cannot be left blank', 'error')
+            flash ('User already exists please log-in','error')
+
+            
 
     return render_template('signup.html')
 
@@ -103,16 +123,15 @@ def newblog():
     if request.method == 'POST':
         blog_name = request.form['name']
         blog_content = request.form['content'] 
-        owner = request.form["owner_id"]
-        
+
         existing_blog = Blog.query.filter_by(title=blog_name).first()
         
         if not existing_blog:
+            owner = User.query.filter_by(username=session['username']).first()
             new_blog = Blog(blog_name,blog_content,owner)
             db.session.add(new_blog)
             db.session.commit()
             session ['blog_name'] = blog_name
-
             return redirect("/blogs?id={0}".format(new_blog.id))
         else:
             flash ('Field cannot be left blank', 'error')
