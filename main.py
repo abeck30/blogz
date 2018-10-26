@@ -33,7 +33,7 @@ class User(db.Model):
 
 @app.before_request
 def require_login():
-    allowed_routes = ['login', 'signup']
+    allowed_routes = ['login', 'home', 'signup','blog']
     if request.endpoint not in allowed_routes and 'username' not in session:
         return redirect('/login') 
 
@@ -69,15 +69,15 @@ def signup():
             flash('Fields cannot be blank', 'error')
             error = True
 
-        elif len(username) <= 3:
+        if len(username) <= 3:
             flash('Username must be more than 3 characters','error')
             error = True
 
-        elif len(password) <= 3:
+        if len(password) <= 3:
             flash('Password must be longer than 3 characters', 'error')
             error = True
         
-        elif verify != password:
+        if verify != password:
             flash('Passwords do not match. Try again', 'error')
             error = True
 
@@ -87,10 +87,8 @@ def signup():
             db.session.commit()
             session['username'] = username
             return redirect('/newblog')
-        else:
-            flash ('User already exists please log-in','error')
-
-            
+        #else:
+            #flash ('User already exists please log-in','error')
 
     return render_template('signup.html')
 
@@ -102,20 +100,36 @@ def logout():
 
 @app.route ('/')
 def index():
-    return redirect ("/blogs")    
+    return redirect ("/index")  
+
+@app.route ('/index')
+def home():
+    user_id = request.args.get('id')
+
+    if user_id:
+       username = User.query.get(user_id)
+       return render_template('index.html',title="Blogz Users",list=username)
+
+    username = User.query.all()
+    return render_template('index.html',title="Blogz Users",list=username)
+
+ #TODO Figure out how to render multiple blogs on one page   
+
 
 @app.route ('/blogs', methods=['POST', "GET"])
 def blog():
 
    post_id = request.args.get('id')
+   user_id = request.args.get('id')
 
-   if post_id:
-       #post_id_int = int(post_id)
+   if post_id and user_id:
        name = Blog.query.get(post_id)
-       return render_template('bloglist.html',title="Blogz",content="",name=name)
+       username = User.query.get(user_id)
+       return render_template('bloglist.html',title="Blogz",content="",name=name, author=username)
 
    blogs = Blog.query.all()
-   return render_template('bloglist.html',title="Blogz",content=blogs,name="")
+   username = User.query.all()
+   return render_template('bloglist.html',title="Blogz",content=blogs,name="", author=username)
 
 @app.route('/newblog', methods=['POST', "GET"]) 
 def newblog():
@@ -123,11 +137,12 @@ def newblog():
     if request.method == 'POST':
         blog_name = request.form['name']
         blog_content = request.form['content'] 
+        owner = User.query.filter_by(username=session['username']).first()
 
-        existing_blog = Blog.query.filter_by(title=blog_name).first()
+
+        existing_blog = Blog.query.filter_by(title=blog_name, owner=owner).first()
         
         if not existing_blog:
-            owner = User.query.filter_by(username=session['username']).first()
             new_blog = Blog(blog_name,blog_content,owner)
             db.session.add(new_blog)
             db.session.commit()
@@ -137,8 +152,8 @@ def newblog():
             flash ('Field cannot be left blank', 'error')
     
     return render_template('newblog.html')
+  
 
-   
- 
+
 if __name__ == '__main__':
     app.run()
